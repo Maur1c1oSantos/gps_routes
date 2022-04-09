@@ -1,9 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.gps_routes">
-      <application
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <application
         android:label="gps"
-        android:name="${applicationName}"
+        android:name=".MainApplication"
         android:icon="@mipmap/ic_launcher">
+          <service android:name=".MyService"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -19,7 +23,7 @@
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
-              />
+              />1
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

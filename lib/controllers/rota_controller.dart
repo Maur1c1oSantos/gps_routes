@@ -6,11 +6,11 @@ import 'package:gps_routes/models/rota_entity.dart';
 class RotaController {
   final db = DatabaseHandler();
 
-  Future<void> salvarRota(RotaEntity rota) async {
+  salvarRota(RotaEntity rota) async {
     await db.insertRota(rota);
   }
 
-  Future<void> atualizarRota(String tempo) async {
+  atualizarRota(String tempo) async {
     RotaEntity rota = await db.buscarUltimaRota();
     var editRota = RotaEntity(
       id: rota.id,
@@ -20,15 +20,19 @@ class RotaController {
     await db.updateRota(editRota);
   }
 
-  Future<void> deletarRota(int id) async {
+  deletarRota(int id) async {
     await db.deleteRota(id);
   }
 
-  Future<List<RotaEntity>> listarRotas() async {
-    return await db.listarRotas();
+  // Future<List<RotaEntity>> listarRotas() async {
+  //   return await db.listarRotas();
+  // }
+
+  buscarUltimaRota() async {
+    return await db.buscarUltimaRota();
   }
 
-  Future<RotaEntity> buscarUltimaRota() async {
-    return await db.buscarUltimaRota();
+  listarRotas() async {
+    return await db.listarRotas();
   }
 }

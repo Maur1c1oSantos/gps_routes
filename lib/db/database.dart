@@ -12,7 +12,7 @@ class DatabaseHandler {
         await database.execute(
             "CREATE TABLE Rotas(id INTEGER PRIMARY KEY AUTOINCREMENT, titulo TEXT NOT NULL, tempo TEXT NOT NULL)");
         await database.execute(
-            "CREATE TABLE Locais(id INTEGER PRIMARY KEY AUTOINCREMENT, latitude TEXT NOT NULL, longitude TEXT NOT NULL, idRota INTEGER NOT NULL, FOREIGN KEY (idRota) REFERENCES Rotas (id) ON DELETE NO ACTION ON UPDATE NO ACTION)");
+            "CREATE TABLE Locais(id INTEGER PRIMARY KEY AUTOINCREMENT, latitude TEXT NOT NULL, longitude TEXT NOT NULL, rua TEXT NOT NULL, idRota INTEGER NOT NULL, FOREIGN KEY (idRota) REFERENCES Rotas (id) ON DELETE NO ACTION ON UPDATE NO ACTION)");
       },
       version: 1,
     );
@@ -28,8 +28,30 @@ class DatabaseHandler {
     );
   }
 
+  // Future<List<RotaEntity>> listarRotas() async {
+  //   final Database db = await initializeDB();
+  //   final List<Map<String, dynamic>> queryResult = await db.query('Rotas');
+  //   return List.generate(queryResult.length, (i) {
+  //     return RotaEntity(
+  //       id: queryResult[i]['id'],
+  //       titulo: queryResult[i]['titulo'],
+  //       tempo: queryResult[i]['tempo'],
+  //     );
+  //   });
+  // }
+
+  Future<void> updateRota(RotaEntity r) async {
+    final db = await initializeDB();
+    await db.update(
+      'Rotas',
+      r.toMap(),
+      where: "id = ?",
+      whereArgs: [r.id],
+    );
+  }
+
   Future<List<RotaEntity>> listarRotas() async {
-    final Database db = await initializeDB();
+    final db = await initializeDB();
     final List<Map<String, dynamic>> queryResult = await db.query('Rotas');
     return List.generate(queryResult.length, (i) {
       return RotaEntity(
@@ -38,16 +60,6 @@ class DatabaseHandler {
         tempo: queryResult[i]['tempo'],
       );
     });
-  }
-
-  Future<void> updateRota(RotaEntity r) async {
-    final Database db = await initializeDB();
-    await db.update(
-      'Rotas',
-      r.toMap(),
-      where: 'id = ?',
-      whereArgs: [r.id],
-    );
   }
 
   Future<void> deleteRota(int id) async {
@@ -88,6 +100,7 @@ class DatabaseHandler {
         id: queryResult[i]['id'],
         latitude: queryResult[i]['latitude'],
         longitude: queryResult[i]['longitude'],
+        rua: queryResult[i]['rua'],
         idRota: queryResult[i]['idRota'],
       );
     });
@@ -112,7 +125,7 @@ class DatabaseHandler {
     );
   }
 
-  Future<List<LocalEntity>> buscarLocaisPorRota(int idRota) async {
+  Future<List<LocalEntity>> listarLocaisPorRota(int idRota) async {
     final Database db = await initializeDB();
     final List<Map<String, dynamic>> queryResult = await db.query(
       'Locais',
@@ -126,6 +139,7 @@ class DatabaseHandler {
           id: queryResult[i]['id'],
           latitude: queryResult[i]['latitude'],
           longitude: queryResult[i]['longitude'],
+          rua: queryResult[i]['rua'],
           idRota: queryResult[i]['idRota'],
         );
       },

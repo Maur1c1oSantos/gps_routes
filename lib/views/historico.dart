@@ -18,7 +18,8 @@ class Historico extends StatefulWidget {
 }
 
 class _BodyState extends State<Historico> {
-  final _streamController = StreamController<List<RotaEntity>>();
+  final _streamRotasController = StreamController<List<RotaEntity>>();
+  final _streamLocaisController = StreamController<List<LocalEntity>>();
   RotaController rotaController = RotaController();
   LocalController localController = LocalController();
   late List<LocalEntity> locais;
@@ -27,15 +28,19 @@ class _BodyState extends State<Historico> {
   @override
   void initState() {
     super.initState();
-    _carregaRotas();
+    carregaRotas();
   }
 
-  _carregaRotas() async {
-    List<RotaEntity> _listaRotas = [];
-    rotaController.listarRotas().then((value) {
-      if (value != null) value.forEach((rota) => _listaRotas.add(rota));
-    });
-    _streamController.add(_listaRotas);
+  void carregaRotas() async {
+    List<RotaEntity> rotas = await rotaController.listarRotas();
+    _streamRotasController.add(rotas);
+  }
+
+  void carregaLocais(int idRota) async {
+    List<LocalEntity> locais =
+        await localController.listarLocaisporRota(idRota);
+
+    _streamLocaisController.add(locais);
   }
 
   @override
@@ -45,121 +50,94 @@ class _BodyState extends State<Historico> {
       body: SizedBox(
         height: 80.h,
         child: StreamBuilder<List<RotaEntity>>(
-            stream: _streamController.stream,
+            stream: _streamRotasController.stream,
             builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return const Center(child: Text("Erro ao acessar os dados"));
-              }
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
               List<RotaEntity> rotas = snapshot.data!;
-              return _listView(rotas);
+              return ListView.builder(
+                itemCount: rotas.length,
+                itemBuilder: (context, index) {
+                  RotaEntity rota = rotas[index];
+                  return ExpansionTileCard(
+                    title: Text(rota.titulo),
+                    subtitle: Text(
+                      'Tempo: ' + rota.tempo,
+                      style: TextStyle(color: Colors.black.withOpacity(0.6)),
+                    ),
+                    children: <Widget>[
+                      const Divider(
+                        thickness: 5.0,
+                        height: 1.0,
+                      ),
+                      Column(
+                        children: [
+                          Center(
+                            child: SizedBox(
+                              height: 40.h,
+                              child: FutureBuilder<List<LocalEntity>>(
+                                future: localController
+                                    .listarLocaisporRota(rota.id!),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData) {
+                                    return const Center(
+                                        child: CircularProgressIndicator());
+                                  }
+                                  return ListView.builder(
+                                    itemCount: snapshot.data!.length,
+                                    itemBuilder: (context, index) {
+                                      LocalEntity local = snapshot.data![index];
+                                      return Center(
+                                        child: ListTile(
+                                          title: Text(
+                                              local.latitude.toString() +
+                                                  ' ' +
+                                                  local.longitude.toString()),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                              flex: 2,
+                              child: IconButton(
+                                icon: const Icon(Icons.edit),
+                                color: Colors.yellow,
+                                onPressed: () {},
+                              )),
+                          Expanded(
+                            flex: 2,
+                            child: IconButton(
+                              icon: const Icon(Icons.delete),
+                              color: Colors.red,
+                              onPressed: () {
+                                rotaController.deletarRota(rota.id!);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              );
             }),
       ),
     );
   }
 
-  Widget _listView(List<RotaEntity> rotas) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: ListView.builder(
-        itemCount: rotas != null ? rotas.length : 0,
-        itemBuilder: (context, index) {
-          RotaEntity rota = rotas[index];
-          return ExpansionTileCard(
-            leading: const CircleAvatar(child: Text('A')),
-            title: Text(rota.titulo),
-            subtitle: Text(
-              rota.tempo,
-              style: TextStyle(color: Colors.black.withOpacity(0.6)),
-            ),
-            children: <Widget>[
-              const Divider(
-                thickness: 5.0,
-                height: 1.0,
-              ),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                      flex: 2,
-                      child: IconButton(
-                        icon: const Icon(Icons.edit),
-                        color: Colors.yellow,
-                        onPressed: () {},
-                      )),
-                  Expanded(
-                    flex: 2,
-                    child: IconButton(
-                      icon: const Icon(Icons.delete),
-                      color: Colors.red,
-                      onPressed: () {
-                        rotaController.deletarRota(rota.id!);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              //      child: FutureBuilder<List<LocalEntity>>(
-              //       future:
-              //           (localController.buscarLocaisPorRota(idRota)),
-              //       builder: (context, snapshot) {
-              //         if (snapshot.hasData) {}
-              //       }),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Text(
-                    "FlutterDevs é especializada na criação de aplicativos ",
-                  ),
-                ),
-              ),
-            ],
-          );
-
-          // Card(
-          //   clipBehavior: Clip.antiAlias,
-          //   child: Column(
-          //     children: [
-          //       ListTile(
-          //         // leading: const Icon(Icons.arrow_drop_down_circle),
-          //         title: Text(snapshot.data![index].titulo),
-          //         subtitle: Text(
-          //           snapshot.data![index].tempo,
-          //           style:
-          //               TextStyle(color: Colors.black.withOpacity(0.6)),
-          //         ),
-          //       ),
-          //       Padding(
-          //         padding: const EdgeInsets.all(16.0),
-          //         child: const ListTile(),
-          //       ),
-          //       ButtonBar(
-          //         alignment: MainAxisAlignment.start,
-          //         children: [
-          //           IconButton(
-          //             icon: const Icon(Icons.edit),
-          //             color: Colors.yellow,
-          //             onPressed: () {},
-          //           ),
-          //           IconButton(
-          //             icon: const Icon(Icons.delete),
-          //             color: Colors.red,
-          //             onPressed: () {},
-          //           )
-          //         ],
-          //       ),
-          //       // Image.asset('assets/images/dog.jpg'),
-          //     ],
-          //   ),
-          // );
-        },
-      ),
-    );
-  }
+  // Widget _listRotasView(List<RotaEntity> rotas) {
+  //   return Padding(
+  //     padding: const EdgeInsets.all(8.0),
+  //     child:
+  //   );
+  // }
 }

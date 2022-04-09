@@ -1,6 +1,8 @@
 // ignore_for_file: file_names, library_prefixes, avoid_print, non_constant_identifier_names, no_logic_in_create_state, unnecessary_null_comparison
 
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:gps_routes/Controllers/local_controller.dart';
 import 'package:gps_routes/Controllers/rota_controller.dart';
 import 'package:gps_routes/models/local_entity.dart';
@@ -25,14 +27,11 @@ class _BodyState extends State<Home> {
   late LocationData _userLocation;
   late Location _location;
   String street = "";
-  late RotaEntity rota;
   RotaController rotaController = RotaController();
-  late LocalEntity local;
   LocalController localController = LocalController();
   late GoogleMapController _googleMapController;
   LatLng _local = const LatLng(0.0, 0.0);
-  late bool click;
-  String tempo = "";
+  bool click = false;
   late final stopwatch = Stopwatch();
 
   _BodyState();
@@ -40,8 +39,7 @@ class _BodyState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    click = false;
-    _getUserLocation();
+    getUserLocation();
   }
 
   @override
@@ -50,7 +48,7 @@ class _BodyState extends State<Home> {
     _googleMapController.dispose();
   }
 
-  Future<void> _verificaPermissoes() async {
+  Future<void> verificaPermissoes() async {
     _location = Location();
 
     bool _serviceEnabled = await _location.serviceEnabled();
@@ -70,8 +68,8 @@ class _BodyState extends State<Home> {
     }
   }
 
-  Future<void> _getUserLocation() async {
-    _verificaPermissoes();
+  Future<void> getUserLocation() async {
+    verificaPermissoes();
     Location location = Location();
     _userLocation = await location.getLocation();
     _local = LatLng(_userLocation.latitude!, _userLocation.longitude!);
@@ -93,63 +91,75 @@ class _BodyState extends State<Home> {
     );
   }
 
-  _watchStart() {
+  void startServiceInAndroid() async {
+    if (Platform.isAndroid) {
+      var method = const MethodChannel("com.example.gps_routes.messages");
+      String data = await method.invokeMethod("startService");
+      debugPrint(data);
+    }
+  }
+
+  void stopServiceInAndroid() async {
+    if (Platform.isAndroid) {
+      var method = const MethodChannel("com.example.gps_routes.messages");
+      String data = await method.invokeMethod("stopService");
+      debugPrint(data);
+    }
+  }
+
+  void novaRota() {
     stopwatch.start();
-  }
-
-  _watchStop() {
-    stopwatch.stop();
-  }
-
-  _watchReset() {
-    stopwatch.reset();
-  }
-
-  _finalizaRota() async {
-    _watchStop();
-    tempo = stopwatch.elapsed.toString().substring(0, 8);
-    rotaController.atualizarRota(tempo);
-    _watchReset();
-    print("Rota atualizada");
-  }
-
-  _novaRota() {
-    _watchStart();
     DateTime newDate = DateTime.now();
-    String date = newDate.toString().substring(0, 10);
-    rota = RotaEntity(titulo: date, tempo: tempo);
+    String date = newDate.toString().substring(0, 16);
+    RotaEntity rota = RotaEntity(titulo: date, tempo: "00:00:00");
     rotaController.salvarRota(rota);
+    startServiceInAndroid();
     print("Rota criada");
   }
 
-  _novoLocal() async {
-    rota = await rotaController.buscarUltimaRota();
+  void finalizaRota() async {
+    stopwatch.stop();
+    String tempo = stopwatch.elapsed.toString().substring(0, 7);
+    rotaController.atualizarRota(tempo);
+    stopServiceInAndroid();
+    stopwatch.reset();
+    print("Rota atualizada");
+  }
+
+  void novoLocal() async {
+    RotaEntity rota = await rotaController.buscarUltimaRota();
     int idRota = rota.id!;
-    local = LocalEntity(
+    LocalEntity local = LocalEntity(
         latitude: _userLocation.latitude!.toString(),
         longitude: _userLocation.longitude!.toString(),
+        rua: street,
         idRota: idRota);
     localController.salvarLocal(local);
     print("Local criado");
   }
 
-  _ButtomClick() {
+  void ButtomClick() {
     click == false ? click = true : click = false;
-    if (click == true) {
-      _novaRota();
-      _novoLocal();
+    if (click) {
+      novaRota();
+    } else {
+      finalizaRota();
     }
-    _novaPosicao();
   }
 
-  _novaPosicao() {
+  void iniciaRastreamento() {
+    if (click) {
+      novoLocal();
+      novaPosicao();
+    }
+  }
+
+  void novaPosicao() {
     if (click == true) {
       Timer(
         const Duration(seconds: 15),
-        () => [_getUserLocation(), _novoLocal(), _novaPosicao()],
+        () => [getUserLocation(), novoLocal(), novaPosicao()],
       );
-    } else {
-      _finalizaRota();
     }
   }
 
@@ -203,13 +213,13 @@ class _BodyState extends State<Home> {
                                 SizedBox(
                                   height: 55.h,
                                   child: GoogleMap(
+                                    mapType: MapType.normal,
+                                    myLocationEnabled: true,
+                                    myLocationButtonEnabled: true,
+                                    zoomControlsEnabled: false,
                                     initialCameraPosition: CameraPosition(
                                       target: _local,
                                     ),
-                                    mapType: MapType.normal,
-                                    myLocationEnabled: true,
-                                    myLocationButtonEnabled: false,
-                                    zoomControlsEnabled: false,
                                     onMapCreated: (controller) =>
                                         _createdMap(controller),
                                   ),
@@ -245,8 +255,9 @@ class _BodyState extends State<Home> {
                               onPrimary: Colors.red,
                             ),
                             onPressed: () => [
-                              _getUserLocation(),
-                              _ButtomClick(),
+                              ButtomClick(),
+                              getUserLocation(),
+                              iniciaRastreamento(),
                             ],
                             child: click == false
                                 ? const Text(
