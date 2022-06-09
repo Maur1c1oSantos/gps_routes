@@ -157,7 +157,7 @@ class _BodyState extends State<Home> {
   void novaPosicao() {
     if (click == true) {
       Timer(
-        const Duration(seconds: 15),
+        const Duration(seconds: 30),
         () => [getUserLocation(), novoLocal(), novaPosicao()],
       );
     }
@@ -228,6 +228,7 @@ class _BodyState extends State<Home> {
                                   padding:
                                       const EdgeInsets.symmetric(vertical: 6.0),
                                   child: Text(street,
+                                      key: const Key('rua'),
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                           fontSize: 15,

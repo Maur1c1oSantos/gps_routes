@@ -6,7 +6,7 @@
         android:label="gps"
         android:name=".MainApplication"
         android:icon="@mipmap/ic_launcher">
-          <service android:name=".MyService"/>
+        <service android:name=".MyService"/>
 
         <activity
             android:name=".MainActivity"

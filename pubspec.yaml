@@ -45,9 +45,10 @@ dependencies:
   expansion_tile_card: ^2.0.0
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
-  floor_generator: ^1.2.0
   build_runner: ^2.1.7
 
   # The "flutter_lints" package below contains a set of recommended lints to

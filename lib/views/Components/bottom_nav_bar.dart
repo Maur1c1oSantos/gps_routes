@@ -2,7 +2,6 @@
 
 import 'package:gps_routes/views/historico.dart';
 import 'package:gps_routes/views/home.dart';
-import 'package:gps_routes/views/map.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:sizer/sizer.dart';
@@ -11,7 +10,7 @@ import '../../constants.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({Key? key}) : super(key: key);
-  static String routeName = "/bottom_bar";
+  static String routeName = "/";
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
@@ -21,11 +20,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
   _BottomNavBarState();
 
-  int index = 1;
+  int index = 0;
   @override
   Widget build(BuildContext context) {
     final screens = [
-      Map(),
       Home(),
       Historico(),
     ];
@@ -44,10 +42,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
             buttonBackgroundColor: kPrimaryColor,
             backgroundColor: Colors.transparent,
             key: _bottomNavigationKey,
-            index: 1,
+            index: 0,
             height: 60.0,
             items: <Widget>[
-              Icon(Icons.map, size: 4.h),
               Icon(Icons.timeline, size: 4.h),
               Icon(Icons.list, size: 4.h),
             ],

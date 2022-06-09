@@ -11,12 +11,11 @@ class Routes extends StatelessWidget {
     return Sizer(
       builder: (context, orientation, deviceType) {
         return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'GPS',
-          theme: theme(),
-          initialRoute: BottomNavBar.routeName,
-          routes: {BottomNavBar.routeName: (context) => const BottomNavBar()},
-        );
+            debugShowCheckedModeBanner: false,
+            title: 'GPS',
+            theme: theme(),
+            initialRoute: BottomNavBar.routeName,
+            routes: {'/': (context) => const BottomNavBar()});
       },
     );
   }
